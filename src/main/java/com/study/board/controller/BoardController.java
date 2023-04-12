@@ -6,7 +6,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 
 @Controller
 public class BoardController {
@@ -20,11 +24,14 @@ public class BoardController {
         return "boardWrite";
     }
 
-    @PostMapping("/board/writepro")
-    public String boardWritePro(Board board) {
-        boardService.write(board);
+    @PostMapping("/board/writePro")
+    public String boardWritePro(Board board, Model model, MultipartFile file) throws Exception {
+        boardService.write(board, file);
 
-        return "";
+        model.addAttribute("message", "글 작성이 완료되었습니다.");
+        model.addAttribute("searchUrl", "/board/list");
+
+        return "message";
     }
 
     @GetMapping("/board/list")
@@ -38,5 +45,33 @@ public class BoardController {
         model.addAttribute("board", boardService.detail(id));
 
         return "boardDetail";
+    }
+
+    @GetMapping("/board/delete")
+    public String boardDelete(Integer id) {
+        boardService.delete(id);
+
+        return "redirect:/board/list";
+    }
+
+    @GetMapping("/board/modify/{id}")
+    public String boardModify(@PathVariable("id") Integer id, Model model) {
+        model.addAttribute("board", boardService.detail(id));
+
+        return "boardModify";
+    }
+
+    @PostMapping("/board/update/{id}")
+    public String boardUpdate(@PathVariable("id") Integer id, Model model, Board board) throws Exception {
+        Board boardTmp = boardService.detail(id);
+        boardTmp.setTitle(board.getTitle());
+        boardTmp.setContent(board.getContent());
+
+        boardService.write(boardTmp);
+
+        model.addAttribute("message", "글 수정이 완료되었습니다.");
+        model.addAttribute("searchUrl", "/board/list");
+
+        return "message";
     }
 }
