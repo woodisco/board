@@ -97,4 +97,16 @@ public class BoardController {
 
         return "message";
     }
+
+    @GetMapping("/board/upload")
+    public String uploadTest() {
+
+        return "uploadTest";
+    }
+
+//    @PostMapping("/board/uploadPro")
+//    public String uploadTestPro(MultipartFile file) throws Exception {
+//
+//        return "message";
+//    }
 }
