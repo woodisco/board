@@ -1,7 +1,10 @@
 package com.study.board.controller;
 
 import com.study.board.entity.Board;
+import com.study.board.forms.TsvData;
 import com.study.board.service.BoardService;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -9,12 +12,19 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.Validator;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Controller
 public class BoardController {
@@ -104,9 +114,30 @@ public class BoardController {
         return "uploadTest";
     }
 
-//    @PostMapping("/board/uploadPro")
-//    public String uploadTestPro(MultipartFile file) throws Exception {
-//
-//        return "message";
-//    }
+    @PostMapping("/board/uploadPro")
+    public String uploadTestPro(MultipartFile file) throws IOException {
+
+        try {
+            InputStream inputStream = file.getInputStream();
+
+            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] columns = line.split("\t");
+                processLine(columns);
+            }
+            reader.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return "redirect:/board/upload";
+    }
+
+    public TsvData processLine(String[] columns) {
+
+        TsvData model = new TsvData(columns[0], columns[1], columns[2]);
+
+        return model;
+    }
 }
