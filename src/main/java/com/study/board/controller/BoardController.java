@@ -3,28 +3,40 @@ package com.study.board.controller;
 import com.study.board.entity.Board;
 import com.study.board.forms.TsvData;
 import com.study.board.service.BoardService;
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.Validation;
+import javax.validation.ConstraintViolation;
+import javax.validation.Validation;
+import javax.validation.Validator;
+import javax.validation.ValidatorFactory;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.validation.Validator;
+import org.springframework.util.FileCopyUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
+import java.io.*;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 @Controller
 public class BoardController {
@@ -114,6 +126,8 @@ public class BoardController {
         return "uploadTest";
     }
 
+
+
     @PostMapping("/board/uploadPro")
     public String uploadTestPro(MultipartFile file) throws IOException {
 
@@ -124,7 +138,10 @@ public class BoardController {
             String line;
             while ((line = reader.readLine()) != null) {
                 String[] columns = line.split("\t");
-                processLine(columns);
+
+                TsvData model = new TsvData(columns[0], columns[1], columns[2]);
+                System.out.println(model.getNum()+model.getName()+model.getEmail());
+                validateModel(model);
             }
             reader.close();
         } catch (IOException e) {
@@ -134,10 +151,42 @@ public class BoardController {
         return "redirect:/board/upload";
     }
 
-    public TsvData processLine(String[] columns) {
+    private void validateModel(TsvData model) {
+        System.out.println("==========================validateModel");
+        ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
+        Validator validator = factory.getValidator();
+        Set<ConstraintViolation<TsvData>> violations = validator.validate(model);
+        System.out.println("==========================" + violations);
 
-        TsvData model = new TsvData(columns[0], columns[1], columns[2]);
+        String result = "";
+        for (ConstraintViolation<TsvData> err : violations) {
+            result += err.getMessage() + "<br>";
+            System.out.println("==========================" + result);
+        }
+    }
 
-        return model;
+    @RequestMapping("/board/download")
+    public ResponseEntity<String> downloadFile() throws IOException {
+        File tsvFile = createTsvFile();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentDispositionFormData("attachment", "data.tsv");
+
+        // Return the zipped file as a response
+        return new ResponseEntity<String>(headers, HttpStatus.CREATED);
+    }
+
+
+    private File createTsvFile() throws IOException {
+        File file = File.createTempFile("data", ".tsv");
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+            // Write the TSV data
+            writer.write("Column1\tColumn2\tColumn3");
+            writer.newLine();
+            writer.write("Value1\tValue2\tValue3");
+        }
+        return file;
     }
 }

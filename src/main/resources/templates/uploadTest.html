@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <title>게시물 작성 폼</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+          integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 </head>
 <style>
     .layout {
@@ -11,24 +14,53 @@
         margin-top : 40px;
     }
 
-    .layout input{
-        width : 100%;
-        box-sizing : border-box;
+    .btn-upload {
+      width: 50px;
+      background: #fff;
+      border: 1px solid rgb(77,77,77);
+      border-radius: 10px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      &:hover {
+        background: rgb(77,77,77);
+        color: #fff;
+      }
     }
 
-    .layout textarea {
-        width : 100%;
-        margin-top : 10px;
-        min-height : 300px;
+    #file {
+      display: none;
     }
 </style>
 <body>
     <div class="layout">
         <form action="/board/uploadPro" method="post" enctype="multipart/form-data">
-            <input type="text" name="filepath">
-            <input type="file" name="file">
-            <button type="submit">작성</button>
+            <div class="row">
+                <div>
+                    <input type="text" name="filepath" id="filepath" value="">
+                </div>
+                <div>
+                    <label for="file">
+                        <div class="btn-upload">...</div>
+                    </label>
+                    <input type="file" name="file" id="file" onchange="fileUpload()">
+                    <button type="submit">アップロード</button>
+                </div>
+            </div>
         </form>
+        <a href="/board/download">download</a>
     </div>
 </body>
 </html>
+
+<script>
+    function fileUpload() {
+        // 파일경로 취득
+        const applyFile = document.getElementById("file").value;
+
+        // filepath 삽입
+        document.getElementById("filepath").value = applyFile;
+    }
+</script>
