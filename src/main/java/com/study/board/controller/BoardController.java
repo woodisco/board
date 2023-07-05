@@ -19,7 +19,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.util.FileCopyUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -30,16 +29,14 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 import java.io.*;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 @Controller
 public class BoardController {
+
+//    @Autowired
+//    private Validator validator;
 
     @Autowired
     private BoardService boardService;
@@ -139,9 +136,17 @@ public class BoardController {
             while ((line = reader.readLine()) != null) {
                 String[] columns = line.split("\t");
 
-                TsvData model = new TsvData(columns[0], columns[1], columns[2]);
-                System.out.println(model.getNum()+model.getName()+model.getEmail());
-                validateModel(model);
+                TsvData model = new TsvData();
+                model.setNum(columns[0]);
+                model.setNum(columns[1]);
+                model.setNum(columns[2]);
+                ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
+                Validator validator = factory.getValidator();
+                Set<ConstraintViolation<TsvData>> violations = validator.validate(model);
+                System.out.println(violations);
+                for (ConstraintViolation<TsvData> violation : violations) {
+                    System.out.println(violation);
+                }
             }
             reader.close();
         } catch (IOException e) {
@@ -149,20 +154,6 @@ public class BoardController {
         }
 
         return "redirect:/board/upload";
-    }
-
-    private void validateModel(TsvData model) {
-        System.out.println("==========================validateModel");
-        ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
-        Validator validator = factory.getValidator();
-        Set<ConstraintViolation<TsvData>> violations = validator.validate(model);
-        System.out.println("==========================" + violations);
-
-        String result = "";
-        for (ConstraintViolation<TsvData> err : violations) {
-            result += err.getMessage() + "<br>";
-            System.out.println("==========================" + result);
-        }
     }
 
     @RequestMapping("/board/download")
