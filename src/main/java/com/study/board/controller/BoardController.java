@@ -1,42 +1,35 @@
 package com.study.board.controller;
 
 import com.study.board.entity.Board;
-import com.study.board.forms.TsvData;
 import com.study.board.service.BoardService;
-import javax.validation.ConstraintViolation;
-import javax.validation.Validation;
-import javax.validation.Validator;
-import javax.validation.ValidatorFactory;
-
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.Set;
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 @Controller
 public class BoardController {
-
-//    @Autowired
-//    private Validator validator;
 
     @Autowired
     private BoardService boardService;
@@ -64,10 +57,10 @@ public class BoardController {
 
         Page<Board> list = null;
 
-        if(searchKeyword == null) {
-            list =  boardService.list(pageable);
+        if (searchKeyword == null) {
+            list = boardService.list(pageable);
         } else {
-            list =  boardService.searchList(searchKeyword, pageable);
+            list = boardService.searchList(searchKeyword, pageable);
         }
 
         int nowPage = list.getPageable().getPageNumber() + 1;
@@ -124,9 +117,8 @@ public class BoardController {
     }
 
 
-
-    @PostMapping("/board/uploadPro")
-    public String uploadTestPro(MultipartFile file) throws IOException {
+    @RequestMapping("/board/uploadPro")
+    public String uploadTestPro(MultipartFile file, HttpServletResponse response) throws IOException {
 
         try {
             InputStream inputStream = file.getInputStream();
@@ -135,20 +127,14 @@ public class BoardController {
             String line;
             while ((line = reader.readLine()) != null) {
                 String[] columns = line.split("\t");
+                List<String> list = new ArrayList<>();
+                list.add(Arrays.toString(columns));
 
-                TsvData model = new TsvData();
-                model.setNum(columns[0]);
-                model.setNum(columns[1]);
-                model.setNum(columns[2]);
-                ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
-                Validator validator = factory.getValidator();
-                Set<ConstraintViolation<TsvData>> violations = validator.validate(model);
-                System.out.println(violations);
-                for (ConstraintViolation<TsvData> violation : violations) {
-                    System.out.println(violation);
-                }
+                download(list);
             }
-            reader.close();
+            //List<String> list1 = new ArrayList<>();
+            //list1.add("asd");
+            //download(list1, response);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -156,28 +142,71 @@ public class BoardController {
         return "redirect:/board/upload";
     }
 
-    @RequestMapping("/board/download")
-    public ResponseEntity<String> downloadFile() throws IOException {
-        File tsvFile = createTsvFile();
+    public void download(List<String> list) throws IOException {
+        String tsvContent = list.toString();
+        String fileName = "error.tsv";
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-        headers.setContentDispositionFormData("attachment", "data.tsv");
-
-        // Return the zipped file as a response
-        return new ResponseEntity<String>(headers, HttpStatus.CREATED);
-    }
-
-
-    private File createTsvFile() throws IOException {
-        File file = File.createTempFile("data", ".tsv");
-
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
-            // Write the TSV data
-            writer.write("Column1\tColumn2\tColumn3");
-            writer.newLine();
-            writer.write("Value1\tValue2\tValue3");
+        ByteArrayOutputStream zipOutputStream = new ByteArrayOutputStream();
+        try (ZipOutputStream zip = new ZipOutputStream(zipOutputStream)) {
+            ZipEntry entry = new ZipEntry(fileName);
+            zip.putNextEntry(entry);
+            zip.write(tsvContent.getBytes());
+            zip.closeEntry();
         }
-        return file;
+
+        HttpServletResponse response = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getResponse();
+
+        response.setContentType(MediaType.APPLICATION_OCTET_STREAM_VALUE);
+        response.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=download.zip");
+
+        try (OutputStream out = response.getOutputStream()) {
+            out.write(zipOutputStream.toByteArray());
+            out.flush();
+        }
     }
+
+//    @RequestMapping("/board/download")
+//    public ResponseEntity<InputStreamResource> download() throws IOException {
+//
+//        List<String> list1 = new ArrayList<>();
+//        list1.add("asd1");
+//        list1.add("asd2");
+//        list1.add("asd3");
+//        list1.add("asd4");
+//        list1.add("asd5");
+//
+//        // Create TSV content
+//        StringBuilder tsvContentBuilder = new StringBuilder();
+//        for (int i = 0; i < list1.size(); i++) {
+//            tsvContentBuilder.append(list1.get(i));
+//            if ((i + 1) % 3 == 0) {
+//                tsvContentBuilder.append("\n"); // Add a newline after every third entry
+//            } else {
+//                tsvContentBuilder.append("\t"); // Add a tab between entries
+//            }
+//        }
+//
+//        String tsvContent = tsvContentBuilder.toString();
+//        String fileName = "error.tsv";
+//
+//        ByteArrayOutputStream zipOutputStream = new ByteArrayOutputStream();
+//        try (ZipOutputStream zip = new ZipOutputStream(zipOutputStream)) {
+//            ZipEntry entry = new ZipEntry(fileName);
+//            zip.putNextEntry(entry);
+//            zip.write(tsvContent.getBytes());
+//            zip.closeEntry();
+//        }
+//
+//        ByteArrayInputStream zipInputStream = new ByteArrayInputStream(zipOutputStream.toByteArray());
+//        InputStreamResource inputStreamResource = new InputStreamResource(zipInputStream);
+//
+//        HttpHeaders headers = new HttpHeaders();
+//        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+//        headers.setContentDisposition(ContentDisposition.attachment().filename("download.zip").build());
+//
+//        return ResponseEntity.ok()
+//                .headers(headers)
+//                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+//                .body(inputStreamResource);
+//    }
 }
