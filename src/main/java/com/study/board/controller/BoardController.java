@@ -15,13 +15,10 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
-import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -209,4 +206,15 @@ public class BoardController {
 //                .contentType(MediaType.APPLICATION_OCTET_STREAM)
 //                .body(inputStreamResource);
 //    }
+
+    @RequestMapping("/board/password")
+    public String passwordTest(@RequestParam("password") String password, RedirectAttributes redirectAttributes) throws Exception {
+        String test = "test";
+        String errorMessage = "test error";
+        if (!password.equals(test)) {
+            redirectAttributes.addFlashAttribute("errorMessage", errorMessage);
+            System.out.println("===================errorMessage");
+        }
+        return "redirect:/board/upload";
+    }
 }
