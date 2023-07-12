@@ -36,7 +36,8 @@
 </style>
 <body>
     <div class="layout">
-        <form action="/board/uploadPro" method="post" enctype="multipart/form-data">
+        <h1 name="ssss"></h1>
+        <form id="test" action="/board/uploadPro" method="post" enctype="multipart/form-data">
             <div class="row">
                 <div>
                     <input type="text" name="filepath" id="filepath" value="">
@@ -46,7 +47,10 @@
                         <div class="btn-upload">...</div>
                     </label>
                     <input type="file" name="file" id="file" onchange="fileUpload()">
-                    <button type="submit">アップロード</button>
+                    <button type="button" onclick="test()">アップロード</button>
+                    <div class="error-message-area">
+                        <h1 id="asd"></h1>
+                    </div>
                 </div>
             </div>
         </form>
@@ -95,6 +99,28 @@
 </html>
 
 <script>
+function test() {
+
+  $.ajax({
+    url: "http://localhost:8090/board/uploadPro",
+    type: "POST",
+    data: new FormData($("#test")[0]),
+    enctype: 'multipart/form-data',
+    processData: false,
+    contentType: false,
+    cache: false,
+    success: function (data) {
+      if(data.result==="OK") {
+        var elements = document.getElementsByName("ssss");
+        elements[0].textContent = data.message;
+      }
+    },
+    error: function (data) {
+      alert("2222");
+    }
+  });
+}
+
 function fileUpload() {
     // 파일경로 취득
     const applyFile = document.getElementById("file").value;
@@ -103,19 +129,19 @@ function fileUpload() {
     document.getElementById("filepath").value = applyFile;
 }
 
-$(document).ready(function() {
-    $("#myBtn").click(function() {
-        $("#myModal").modal();
-    });
+<!--$(document).ready(function() {-->
+<!--    $("#myBtn").click(function() {-->
+<!--        $("#myModal").modal();-->
+<!--    });-->
 
-    var errorMessage = "${errorMessage}";
-    console.log("errorMessage:", errorMessage);
-    if (errorMessage !== null && errorMessage.trim() !== '') {
-        $('#errorModal').modal('show');
-    }
+<!--    var errorMessage = "${errorMessage}";-->
+<!--    console.log("errorMessage:", errorMessage);-->
+<!--    if (errorMessage !== null && errorMessage.trim() !== '') {-->
+<!--        $('#errorModal').modal('show');-->
+<!--    }-->
 
-    $('#modalOKButton').click(function() {
-        $("#myModal").modal();
-    });
-});
+<!--    $('#modalOKButton').click(function() {-->
+<!--        $("#myModal").modal();-->
+<!--    });-->
+<!--});-->
 </script>

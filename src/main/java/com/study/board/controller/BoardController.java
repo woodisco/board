@@ -19,9 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -114,10 +112,19 @@ public class BoardController {
     }
 
 
-    @RequestMapping("/board/uploadPro")
-    public String uploadTestPro(MultipartFile file, HttpServletResponse response) throws IOException {
+    //@PostMapping("/board/uploadPro")
+    @RequestMapping(value = "/board/uploadPro", method = RequestMethod.POST)
+    @ResponseBody
+    public Map<String, Object> uploadTestPro(@RequestParam("file") MultipartFile file, Model model) throws IOException {
 
+
+        Map<String, Object> tesst = new HashMap<>();
         try {
+//            if(file.isEmpty()) {
+//                model.addAttribute("errorMessage3", "파일없음");
+//                return "/uploadTest";
+//            }
+
             InputStream inputStream = file.getInputStream();
 
             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
@@ -129,6 +136,8 @@ public class BoardController {
 
                 download(list);
             }
+            tesst.put("result", "OK");
+            tesst.put("message", "asdasd");
             //List<String> list1 = new ArrayList<>();
             //list1.add("asd");
             //download(list1, response);
@@ -136,7 +145,7 @@ public class BoardController {
             e.printStackTrace();
         }
 
-        return "redirect:/board/upload";
+        return tesst;
     }
 
     public void download(List<String> list) throws IOException {
